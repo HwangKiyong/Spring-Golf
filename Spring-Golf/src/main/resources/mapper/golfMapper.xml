@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" > <!-- mybatis를 사용하기때문에 이분도 필요하다. -->
+<mapper namespace="com.web.test.Golf.mapper.GolfMapper">
+	<select id="getGolfListByUser" parameterType="com.web.test.Golf.vo.Criteria" resultType="com.web.test.User.vo.UserVo">
+	    SELECT * FROM (
+	    			  SELECT ROWNUM AS RNUM, USER_NO, USER_ID, USER_NICKNAME, USER_NAME, phone
+	    			  FROM (
+	    			  		SELECT USER_NO, USER_ID, USER_NICKNAME, USER_NAME, phone
+	    			  		FROM TB_USER
+	    			  		WHERE MANAGER_YN = 'N'
+	    			  		ORDER BY USER_NO 
+	    			  		)
+	    			  )WHERE RNUM BETWEEN #{cri.pageStart,jdbcType=INTEGER} + 1 AND #{cri.pageStart,jdbcType=INTEGER} + #{cri.perPageNum,jdbcType=INTEGER}
+	    
+	</select>
+	
+	<select id="getUserInfoByUserId" resultType="com.web.test.User.vo.UserVo">
+	    <![CDATA[
+	    SELECT U.USER_NO, U.USER_NAME, U.USER_NICKNAME, 
+	           SUM(CASE WHEN R.PLAY_DATE >= #{start,jdbcType=DATE} AND R.PLAY_DATE <= #{end,jdbcType=DATE} THEN 1 ELSE 0 END) AS PERIOD_COUNT, 
+	           COUNT(U.USER_NO) AS TOTAL_COUNT, U.TEXT
+	    FROM TB_USER U
+	    INNER JOIN TB_RESERVATION R ON U.USER_NO = R.USER_NO
+	    WHERE U.USER_NO = #{user_no,jdbcType=VARCHAR}
+	    GROUP BY U.USER_NO, U.USER_NAME, U.USER_NICKNAME, U.TEXT]]>
+	</select>
+	
+	<select id="getUserReservationDates" resultType="com.web.test.Golf.vo.Reservation">
+	    SELECT * FROM
+	    (SELECT ROW_NUMBER() OVER(ORDER BY PLAY_DATE ASC, PLAY_TIME ASC) AS RNUM,
+	    R.RESERVATION_NO, G.location_name, R.PLAY_DATE, R.PLAY_TIME, R.GOLF_NAME
+	    FROM TB_RESERVATION R, TB_USER U, TB_GOLF G
+	    WHERE U.USER_NO = R.USER_NO
+	    AND R.location_name = G.location_name
+	    AND U.USER_NO = #{user_no,jdbcType=INTEGER}
+	     AND R.PLAY_DATE BETWEEN #{start,jdbcType=DATE} AND #{end,jdbcType=DATE}
+	    ) WHERE RNUM BETWEEN #{cri.pageStart} + 1 AND #{cri.pageStart} + #{cri.perPageNum} 
+	</select>
+	
+	<select id="getUserReservationDatesCount" resultType="int">
+	    SELECT COUNT(*) FROM TB_RESERVATION R, TB_USER U WHERE R.USER_NO = U.USER_NO
+	    AND U.user_no = #{user_no} AND R.play_date BETWEEN #{start,jdbcType=DATE} AND #{end,jdbcType=DATE}
+	</select>
+	
+	<select id="getGolfListByUserCount" resultType="int">
+	    SELECT COUNT(*) FROM  TB_USER 
+	    WHERE MANAGER_YN ='N'
+	</select>
+      
+     <!-- 예약하기 -->
+    <insert id ="insertReservation" parameterType="com.web.test.Golf.vo.Reservation">
+    	INSERT INTO TB_RESERVATION (RESERVATION_NO, USER_NO, PLAY_DATE, location_name, PLAY_TIME, PHONE) 
+    	VALUES (RESERVATION_SEQ.NEXTVAL, #{user_no,jdbcType=INTEGER}, #{play_date,jdbcType=DATE}, #{location_name,jdbcType=VARCHAR}, #{play_time}, #{phone,jdbcType=VARCHAR})
+	</insert>	
+	
+	<select id="getReservationList" parameterType="map" resultType="com.web.test.Golf.vo.Reservation">
+	  SELECT * FROM TB_RESERVATION 
+	  WHERE play_date = #{play_date} AND 
+	  		play_time = #{play_time} AND 
+	  		location_name = #{location_name}
+	</select>
+	
+	<update id="updateReservationTime" parameterType="com.web.test.Golf.vo.Reservation">
+	    UPDATE TB_RESERVATION
+	    SET isAvailable = 0
+	    WHERE play_date = #{play_date} 
+	    AND play_time = #{play_time}
+	    AND location_name = #{location_name,jdbcType=VARCHAR}
+	</update>	
+	
+	<select id="getAvailableTime" resultType="com.web.test.Golf.vo.GolfVo">
+	    SELECT *
+		    FROM TB_RESERVATION
+		    WHERE location_name = #{location_name}
+		      AND play_date = #{play_date}
+		      AND isavailable = 1
+		    ORDER BY play_time
+  </select>	  
+    
+    <select id="getReservedTime" resultType="java.lang.String" parameterType="map">
+	    SELECT play_time
+	    FROM TB_RESERVATION
+	    WHERE play_date = #{play_date} AND location_name = #{location_name} AND isAvailable = 0
+	</select>
+	
+	<select id="getUserReservationCheck" resultType="com.web.test.Golf.vo.Reservation">
+			SELECT * FROM(
+					SELECT ROW_NUMBER() OVER(ORDER BY PLAY_DATE DESC, PLAY_TIME DESC) AS RNUM,
+					R.reservation_no, G.location_name, R.PLAY_DATE, R.PLAY_TIME 
+					FROM TB_RESERVATION R, TB_USER U, TB_GOLF G
+					WHERE U.USER_NO = R.USER_NO AND R.location_name = G.location_name
+					AND U.USER_ID = #{user_id,jdbcType=VARCHAR}
+					) 
+					WHERE RNUM BETWEEN #{cri.pageStart} + 1 AND #{cri.pageStart} + #{cri.perPageNum}	
+					ORDER BY PLAY_DATE DESC, PLAY_TIME DESC   
+	</select>
+	
+	<select id="getUserReservationCheckCount" resultType="int">
+	    SELECT COUNT(*) FROM TB_RESERVATION R, TB_USER U
+		WHERE U.USER_NO = R.USER_NO 
+		AND U.USER_ID = #{user_id,jdbcType=VARCHAR}
+	</select>
+	 
+	 
+	 
+	 <delete id="deleteReservation" parameterType="com.web.test.Golf.vo.Reservation">
+		DELETE FROM TB_RESERVATION
+		WHERE USER_NO = (SELECT USER_NO
+						 FROM TB_USER
+						 WHERE USER_ID = #{user_id})
+		AND location_name = #{location_name,jdbcType=VARCHAR}
+		AND PLAY_DATE = #{play_date,jdbcType=VARCHAR}
+		AND PLAY_TIME = #{play_time}				 
+	</delete>
+	
+	<update id="modifyReservation" parameterType="com.web.test.Golf.vo.Reservation">
+		UPDATE TB_RESERVATION
+		    SET LOCATION_NAME = #{location_name},
+		        PLAY_DATE = #{play_date},
+		        PLAY_TIME = #{play_time},
+		        ISMODIFIED = 'Y'
+		    WHERE reservation_no = #{reservation_no,jdbcType=INTEGER}
+	</update>
+	
+	<!-- 페이징 처리 -->
+	<select id="noticeList" resultType="com.web.test.Golf.vo.GolfVo" parameterType="hashmap">
+		SELECT * FROM (
+				SELECT ROW_NUMBER() OVER(ORDER BY U.USER_NO DESC) AS RNUM, U.USER_NO, U.USER_ID, G.location_name, U.USER_NAME, R.PLAY_DATE
+				FROM TB_RESERVATION R JOIN TB_USER U ON R.USER_NO = U.USER_NO
+	  			JOIN TB_GOLF G ON R.location_name = G.location_name)
+	  			WHERE RNUM BETWEEN #{pageStart} + 1 AND #{pageStart} + #{perPageNum}	  			
+	</select>
+	
+	<select id="noticeListCnt" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_RESERVATION R JOIN TB_USER U ON R.USER_NO = U.USER_NO
+	  	JOIN TB_GOLF G ON R.location_name = G.location_name
+	</select>
+		
+	<update id="incrementUserCount" parameterType="Integer">
+		update tb_user
+		set user_count = user_count + 1
+		where user_no = #{user_no}
+	</update>
+	
+	<!-- 검색 -->	
+		<select id="searchNotices" parameterType="com.web.test.Golf.vo.Criteria" resultType="com.web.test.User.vo.UserVo">
+		  SELECT * FROM
+    		(SELECT ROWNUM AS RNUM,USER_NO, USER_ID, USER_NICKNAME, USER_NAME, USER_PWD, PHONE
+   			 FROM (
+   			 	  SELECT USER_NO, USER_ID, USER_NICKNAME, USER_NAME, USER_PWD, PHONE
+   			 	  FROM TB_USER
+   			 	  WHERE MANAGER_YN = 'N'
+   			 	  ORDER BY USER_NO)
+    	<where>
+    	<if test="searchCondition == 'user_id'">
+		        AND user_id LIKE '%' || #{searchKeyword} || '%'
+		      </if>
+		      <if test="searchCondition == 'user_name'">
+		        AND user_name LIKE '%' || #{searchKeyword} || '%'
+		      </if>
+		      <if test="searchKeyword == null">
+		        AND 1=1 <!-- 기본 -->
+		      </if>	
+		      )T
+		      WHERE RNUM BETWEEN #{cri.pageStart} + 1 AND #{cri.pageStart} + #{cri.perPageNum}	
+              </where>		   	  
+		</select>
+		
+		<select id="searchListCnt" parameterType="com.web.test.Golf.vo.Criteria" resultType="int">
+		  SELECT COUNT(*) 
+		  FROM TB_USER  
+		  WHERE MANAGER_YN = 'N'
+		  <if test="searchCondition == 'user_id'">
+		        AND user_id LIKE '%' || #{searchKeyword} || '%'
+		      </if>
+		      <if test="searchCondition == 'user_name'">
+		        AND user_name LIKE '%' || #{searchKeyword} || '%'
+		      </if>
+		      <if test="searchKeyword == null">
+		        AND 1=1 <!-- 기본 -->
+		      </if>	
+		</select>
+		
+		<select id="getAllReservations"	resultType="com.web.test.Golf.vo.Reservation">
+			SELECT U.USER_NO, U.USER_ID, U.USER_NAME, R.PLAY_DATE, R.PLAY_TIME, G.location_name,R.golf_name, R.reservation_no, U.phone, R.ISMODIFIED
+			FROM TB_USER U, TB_RESERVATION R, TB_GOLF G
+			WHERE U.USER_NO = R.USER_NO
+			AND R.location_name = G.location_name
+		</select>
+		
+		<!-- 비고란작성 -->
+		<update id="updateText" parameterType="com.web.test.User.vo.UserVo">
+	        UPDATE TB_USER
+	        SET TEXT = #{text,jdbcType=VARCHAR}
+	        WHERE USER_NO = #{user_no}
+	    </update>
+	    
+	    <select id="getUserData" resultType="com.web.test.User.vo.UserVo">
+	   	<![CDATA[SELECT U.USER_NO, U.USER_NAME, U.USER_NICKNAME, U.PHONE,
+	           SUM(CASE WHEN R.PLAY_DATE >= #{start,jdbcType=DATE} AND R.PLAY_DATE <= #{end,jdbcType=DATE} THEN 1 ELSE 0 END) AS PERIOD_COUNT, 
+	           COUNT(U.USER_NO) AS TOTAL_COUNT, U.TEXT
+	    FROM TB_USER U
+	    INNER JOIN TB_RESERVATION R ON U.USER_NO = R.USER_NO
+	    WHERE U.USER_NO = #{user_no,jdbcType=INTEGER}
+	    GROUP BY U.USER_NO, U.USER_NAME, U.USER_NICKNAME, U.TEXT, U.PHONE]]>
+		</select>
+		
+		<update id="updateEvent" parameterType="com.web.test.Golf.vo.Reservation">
+			UPDATE TB_RESERVATION
+		    SET PLAY_DATE = #{play_date,jdbcType=DATE},
+		    LOCATION_NAME = #{location_name},
+		    PLAY_TIME = #{play_time},
+		    ISMODIFIED = 'Y'
+		    WHERE reservation_no = #{reservation_no,jdbcType=INTEGER}
+		</update>
+		
+		<!-- 유저NO로 전화번호 조회 -->
+		  <select id="selectUserById" resultType="java.lang.String">
+		    SELECT PHONE
+		    FROM TB_RESERVATION R
+		    WHERE RESERVATION_NO = #{reservation_no}
+		  </select>
+		  
+		  <update id="updateGolfname" parameterType="com.web.test.Golf.vo.Reservation">
+			  UPDATE TB_RESERVATION
+			  SET GOLF_NAME = #{golf_name,jdbcType=VARCHAR}			      
+			  WHERE RESERVATION_NO = #{reservation_no,jdbcType=INTEGER}
+			</update>
+			
+			<select id="getUserPhoneByName" resultType="java.lang.String">
+				SELECT PHONE FROM TB_USER WHERE USER_NAME = #{user_name}
+			</select>
+			
+			<select id="getUserPhone" resultType="java.lang.String">
+				SELECT PHONE FROM TB_USER WHERE USER_NAME = #{user_name} AND PHONE = #{phone}
+			</select>
+			
+			<select id="getUserByName" resultType="java.lang.Integer">
+				SELECT COUNT(*) FROM TB_USER WHERE USER_NAME = #{user_name}
+			</select>
+			
+			<!-- 관리자 예약하기 -->
+			<insert id="createReservation" parameterType="com.web.test.Golf.vo.Reservation">			  
+			  INSERT INTO TB_RESERVATION (RESERVATION_NO, USER_NO, LOCATION_NAME, PLAY_DATE, PLAY_TIME, PHONE)
+			  VALUES (RESERVATION_SEQ.NEXTVAL,
+			          (SELECT USER_NO FROM TB_USER WHERE USER_NAME = #{user_name}),
+			          #{location_name},
+			          #{play_date,jdbcType=DATE},
+			          #{play_time},
+			          (SELECT PHONE FROM TB_USER WHERE USER_NAME = #{user_name}))
+			</insert>
+			
+			<insert id="multiCreate" parameterType="com.web.test.Golf.vo.Reservation">			  
+			  INSERT INTO TB_RESERVATION (RESERVATION_NO, USER_NO, LOCATION_NAME, PLAY_DATE, PLAY_TIME, PHONE)
+			  VALUES (RESERVATION_SEQ.NEXTVAL,
+			          (SELECT USER_NO FROM TB_USER WHERE USER_NAME = #{user_name} AND PHONE = #{phone}),
+			          #{location_name},
+			          #{play_date,jdbcType=DATE},
+			          #{play_time},
+			          (SELECT PHONE FROM TB_USER WHERE USER_NAME = #{user_name} AND PHONE = #{phone}))
+			</insert>
+			
+			<insert id="insertUser" parameterType="com.web.test.User.vo.UserVo">
+				INSERT INTO TB_USER (USER_NO, USER_NICKNAME, USER_NAME, PHONE)
+				VALUES(USER_SEQ.NEXTVAL, '비회원', #{user_name}, #{phone})
+			</insert>
+			
+			<insert id="createNonMemberReservation" parameterType="com.web.test.Golf.vo.Reservation">
+				INSERT INTO TB_RESERVATION (RESERVATION_NO, USER_NO, LOCATION_NAME, PLAY_DATE, PLAY_TIME, PHONE)
+			    VALUES (RESERVATION_SEQ.NEXTVAL,
+			          (SELECT USER_NO FROM TB_USER WHERE USER_NAME = #{user_name}),
+			          #{location_name},
+			          #{play_date,jdbcType=DATE},
+			          #{play_time},
+			          (SELECT PHONE FROM TB_USER WHERE USER_NAME = #{user_name}))
+			</insert>
+			
+			<delete id="delete" parameterType="com.web.test.Golf.vo.Reservation">
+				DELETE FROM TB_RESERVATION
+				WHERE RESERVATION_NO = #{reservation_no}			 
+			</delete>
+			
+			<select id="getUserNoByUserName" resultType="java.lang.Integer">
+				SELECT COUNT(*) FROM TB_USER 
+				WHERE USER_NAME = #{user_name}
+			</select>
+</mapper>
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" > <!-- mybatis를 사용하기때문에 이분도 필요하다. -->
+<mapper namespace="com.web.test.User.mapper.UserMapper">	<!-- mapper가 데이터베이스와 연동 할 수 있는 부분이다. -->
+	<select id="loginCheck" resultType="com.web.test.User.vo.UserVo">	<!-- select id 와 vo에 있는 메소드를 꼭 맞춰야한다.LoginVo에 있는 정보로 조회한다는것이다. -->
+		select * from
+		tb_user
+		where user_id = #{user_id}
+		and user_pwd = #{user_pwd}		
+	</select>
+	<!-- 유저 아이디와 비밀번호로 로그인 조회를 한다 -->	
+	
+</mapper>

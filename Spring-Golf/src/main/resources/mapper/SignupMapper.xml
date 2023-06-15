@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" > <!-- mybatis를 사용하기때문에 이분도 필요하다. -->
+<mapper namespace="com.web.test.User.mapper.SignupMapper">
+	<insert id="insertRegister" parameterType="com.web.test.User.vo.UserVo">
+		INSERT INTO TB_USER VALUES(USER_SEQ.NEXTVAL, #{user_id}, #{user_name}, #{user_pwd}, #{user_nickname}, 'N', '0', NULL, #{phone})
+	</insert>	
+	
+	<select id="selectByIdWithResult" resultType="java.util.Map">
+	    SELECT * FROM TB_USER WHERE USER_ID=#{user_id}
+	</select>
+	
+	<select id="selectBynicknameWithResult" resultType="java.util.Map">
+	    SELECT USER_NICKNAME FROM TB_USER WHERE USER_NICKNAME=#{user_nickname}
+	</select>
+</mapper>
