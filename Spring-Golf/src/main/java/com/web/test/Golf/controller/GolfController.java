@@ -73,7 +73,7 @@ public class GolfController {
 		model.addAttribute("start", start);
 		model.addAttribute("end", end);
 		model.addAttribute("golfList", golfList);
-
+ 
 		System.out.println(golfList);
 
 		return "/notice/golfList";
