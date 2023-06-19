@@ -88,7 +88,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="getUserReservationCheck" resultType="com.web.test.Golf.vo.Reservation">
 			SELECT * FROM(
 					SELECT ROW_NUMBER() OVER(ORDER BY PLAY_DATE DESC, PLAY_TIME DESC) AS RNUM,
-					R.reservation_no, G.location_name, R.PLAY_DATE, R.PLAY_TIME 
+					R.reservation_no, G.location_name, R.PLAY_DATE, R.PLAY_TIME , R.GOLF_NAME
 					FROM TB_RESERVATION R, TB_USER U, TB_GOLF G
 					WHERE U.USER_NO = R.USER_NO AND R.location_name = G.location_name
 					AND U.USER_ID = #{user_id,jdbcType=VARCHAR}
