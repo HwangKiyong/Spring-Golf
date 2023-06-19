@@ -110,6 +110,31 @@
 </head>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+		$(document).ready(function() {
+		    document.getElementById('play_date').addEventListener('change', function() {
+		        var selectedDate = new Date(this.value);
+		        var today = new Date();
+		        var minDate = new Date();
+		        minDate.setDate(today.getDate() + 28); // 오늘로부터 28일 후로 설정
+		        
+		        if (selectedDate < minDate) {
+		            this.value = '';
+		            alert('28일 이후의 날짜만 선택할 수 있습니다.');
+		        }
+		    });
+		
+		    // 추가된 로직: 페이지 로드 시 초기 날짜 체크
+		    var initialDate = new Date(document.getElementById('play_date').value);
+		    var today = new Date();
+		    var minDate = new Date();
+		    minDate.setDate(today.getDate() + 28); // 오늘로부터 28일 후로 설정
+		
+		    if (initialDate < minDate) {
+		        document.getElementById('play_date').value = '';
+		        this.style.backgroundColor = 'red'; // 빨간색 배경 색상 적용
+		        alert('28일 이후의 날짜만 선택할 수 있습니다.');
+		    }
+		});
     function getReservedTime() {
         var play_date = document.getElementById("play_date").value;
         var location_name = document.getElementById("location_name").options[document.getElementById("location_name").selectedIndex].value;
@@ -197,7 +222,8 @@ function validate() {
                     alert("서버 오류가 발생했습니다.");
                 },
             });
-        }       
+        }   
+        
 </script>
 <body>
   <h2>Reservation</h2>

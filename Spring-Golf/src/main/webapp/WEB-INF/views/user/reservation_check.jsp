@@ -143,8 +143,11 @@
 			<th>Location_Name</th>
         	<th>PLAY_DATE</th>
             <th>PLAY_TIME</th> 
+            <th>GOLF_NAME & TIME</th>
+            <!--
             <th>예약 취소</th>
-            <th>예약 변경</th>     
+            <th>예약 변경</th>    
+            --> 
         </tr>                      
         <c:set var="currentDate" value="<%= java.time.LocalDate.now() %>" />
         <c:set var="cancellationDeadline" value="${currentDate.plusDays(14)}" />
@@ -152,14 +155,16 @@
                 <tr>
                 	<td>${date.reservation_no}</td>
                 	<td>${date.location_name}</td>
-                    <td>${date.play_date}</td>
-                     <td> 
+                    <td>${date.play_date}</td>                    
+                    <td> 
                     <c:choose>
 	                <c:when test="${date.play_time eq '07:00'}">1부(07:00~12:00)</c:when>
 	                <c:when test="${date.play_time eq '13:00'}">2부(13:00~18:00)</c:when>
 	                <c:otherwise>${date.play_time}</c:otherwise>
            			</c:choose>
-            		</td>                        
+            		</td>   
+            		<td>${date.golf_name}</td>
+            		<!--                      
 			        <c:choose>
 			        	<c:when test="${date.play_date < cancellationDeadline}">
                             <td></td>
@@ -182,7 +187,8 @@
 						    <input type="submit" value="예약 변경">
 					  </form></td>				
 					</c:otherwise>
-				</c:choose>					                                                              
+				</c:choose>		
+				-->			                                                              
                 </tr>
             </c:forEach>                 
     </table>     
