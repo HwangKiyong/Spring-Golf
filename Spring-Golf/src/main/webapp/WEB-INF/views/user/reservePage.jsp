@@ -115,11 +115,11 @@
 		        var selectedDate = new Date(this.value);
 		        var today = new Date();
 		        var minDate = new Date();
-		        minDate.setDate(today.getDate() + 28); // 오늘로부터 28일 후로 설정
+		        minDate.setDate(today.getDate() + 30); // 오늘로부터 30일 후로 설정
 		        
 		        if (selectedDate < minDate) {
 		            this.value = '';
-		            alert('28일 이후의 날짜만 선택할 수 있습니다.');
+		            alert('30일 이후의 날짜만 선택할 수 있습니다.');
 		        }
 		    });
 		
@@ -127,12 +127,12 @@
 		    var initialDate = new Date(document.getElementById('play_date').value);
 		    var today = new Date();
 		    var minDate = new Date();
-		    minDate.setDate(today.getDate() + 28); // 오늘로부터 28일 후로 설정
+		    minDate.setDate(today.getDate() + 30); // 오늘로부터 30일 후로 설정
 		
 		    if (initialDate < minDate) {
 		        document.getElementById('play_date').value = '';
 		        this.style.backgroundColor = 'red'; // 빨간색 배경 색상 적용
-		        alert('28일 이후의 날짜만 선택할 수 있습니다.');
+		        alert('30일 이후의 날짜만 선택할 수 있습니다.');
 		    }
 		});
     function getReservedTime() {
@@ -141,7 +141,7 @@
         var selectedDate = new Date(play_date); // 선택된 날짜
         var currentDate = new Date(); // 현재 날짜
         
-        currentDate.setDate(currentDate.getDate() + 28);
+        currentDate.setDate(currentDate.getDate() + 30);
         currentDate.setHours(0, 0, 0, 0);
         
         // 예약된 시간 가져오기
